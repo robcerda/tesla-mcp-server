@@ -1,4 +1,4 @@
-from mcp_server.server import MCPServer, MCPRequest, MCPResponse
+from mcp_server import MCPServer, MCPRequest, MCPResponse
 from typing import Dict, Any, List
 import os
 from dotenv import load_dotenv
