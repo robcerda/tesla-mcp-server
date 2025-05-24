@@ -1,0 +1,26 @@
+{
+    "name": "Tesla MCP",
+    "description": "Interact with Tesla vehicles and solar systems through Claude",
+    "version": "0.1.0",
+    "server": {
+        "url": "http://localhost:8000",
+        "type": "mcp"
+    },
+    "capabilities": [
+        "vehicle_status",
+        "vehicle_control",
+        "solar_status",
+        "energy_history"
+    ],
+    "examples": [
+        "What's the status of my Tesla?",
+        "How much solar power am I generating?",
+        "What's my battery level?",
+        "Show me my solar history for the past week"
+    ],
+    "settings": {
+        "auto_connect": true,
+        "reconnect_interval": 5000,
+        "timeout": 30000
+    }
+} 

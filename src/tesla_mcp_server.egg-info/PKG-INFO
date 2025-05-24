@@ -1,0 +1,148 @@
+Metadata-Version: 2.4
+Name: tesla-mcp-server
+Version: 0.1.0
+Summary: A Model-Controller-Provider server for Tesla vehicles and solar systems
+Home-page: https://github.com/yourusername/tesla-mcp-server
+Author: Your Name
+Author-email: your.email@example.com
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi==0.104.1
+Requires-Dist: uvicorn==0.24.0
+Requires-Dist: python-dotenv==1.0.0
+Requires-Dist: httpx==0.25.1
+Requires-Dist: pydantic==2.4.2
+Requires-Dist: python-jose[cryptography]==3.3.0
+Requires-Dist: mcp-server
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# Tesla MCP Server
+
+A Model-Controller-Provider server for Tesla vehicles and solar systems. This server allows Claude and other AI assistants to interact with Tesla vehicles and solar systems through a standardized interface.
+
+## Features
+
+- Vehicle status and control
+- Solar system monitoring
+- Energy usage tracking
+- Standardized MCP interface for AI assistants
+
+## Requirements
+
+- Python 3.8 or higher
+- Tesla account with API access
+- Tesla API credentials (Client ID and Client Secret)
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/tesla-mcp-server.git
+cd tesla-mcp-server
+```
+
+2. Create and activate a virtual environment:
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+
+3. Install the package:
+```bash
+pip install -e .
+```
+
+4. Create a `.env` file in the project root with your Tesla API credentials:
+```env
+TESLA_CLIENT_ID=your_client_id
+TESLA_CLIENT_SECRET=your_client_secret
+```
+
+## Usage
+
+### Starting the Server
+
+Run the server using the command-line interface:
+```bash
+tesla-mcp-server
+```
+
+Or run it directly with Python:
+```bash
+python -m tesla_mcp_server.server
+```
+
+The server will start on `http://localhost:8000` by default.
+
+### Interacting with the Server
+
+The server provides several endpoints for interacting with Tesla vehicles and solar systems:
+
+- `/health` - Check server health
+- `/vehicles` - List all vehicles
+- `/vehicles/{id}` - Get specific vehicle details
+- `/solar_systems` - List all solar systems
+- `/solar_systems/{id}` - Get specific solar system details
+- `/solar_systems/{id}/history` - Get solar system history
+
+### Example Queries
+
+The server supports natural language queries through the MCP interface. Here are some examples:
+
+- "What's the status of my Tesla?"
+- "How much solar power am I generating?"
+- "What's my battery level?"
+- "Show me my solar history for the past week"
+
+## Configuration
+
+The server can be configured through environment variables:
+
+- `TESLA_CLIENT_ID` - Your Tesla API client ID
+- `TESLA_CLIENT_SECRET` - Your Tesla API client secret
+- `PORT` - Server port (default: 8000)
+- `HOST` - Server host (default: localhost)
+
+## Development
+
+1. Install development dependencies:
+```bash
+pip install -e ".[dev]"
+```
+
+2. Run tests:
+```bash
+pytest
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Inspired by the [intervals-mcp-server](https://github.com/mvilanova/intervals-mcp-server)
+- Built with FastAPI and the MCP server framework 
