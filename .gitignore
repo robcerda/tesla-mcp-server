@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtualenv
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Secrets
+*.env
+credentials.enc
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Other
+.DS_Store
+coverage.xml
+htmlcov/
+.pytest_cache/
+nosetests.xml
+.coverage
+.coverage.*
+.cache
+.tox/
+.nox/
+# If you use Jupyter notebooks:
+.ipynb_checkpoints
+# If you use mypy:
+.mypy_cache/
+# If you use PyInstaller:
+*.manifest
+*.spec
