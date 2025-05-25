@@ -30,7 +30,7 @@ A Model-Controller-Provider server for Tesla vehicles and solar systems. This se
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/tesla-mcp-server.git
+git clone https://github.com/robcerda/tesla-mcp-server.git
 cd tesla-mcp-server
 ```
 
@@ -81,3 +81,24 @@ This script will guide you through the following:
 4.  Finally, it will encrypt your Client ID and Secret using this key and save them into a `credentials.enc` file in the project root.
 
 The `credentials.enc` file (containing your encrypted Tesla API credentials) and your `.env` file (containing the `ENCRYPTION_KEY`) should not be committed to version control if your repository is public or shared. The provided `.gitignore` file is already configured to ignore these files.
+
+## Running the MCP Server
+
+After installation and setting up your credentials, you can run the MCP server using:
+
+```bash
+mcp install src/tesla_mcp_server/server.py --name "Tesla MCP" --with-editable . --env-file .env
+```
+
+This command:
+- Installs the server as an MCP tool named "Tesla MCP"
+- Uses the editable install mode for development
+- Loads environment variables from your `.env` file
+
+The server provides the following tools:
+- `get_system_status`: Get the current status of all Tesla systems
+- `get_solar_status`: Get the current status of the solar system
+- `get_solar_history`: Get historical data for the solar system
+- `get_vehicle_status`: Get the status of all vehicles or a specific vehicle
+
+You can use these tools through Claude or any other MCP-compatible AI assistant.
