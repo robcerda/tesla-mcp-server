@@ -1,0 +1,2 @@
+[console_scripts]
+tesla-mcp-server = tesla_mcp_server.server:main
