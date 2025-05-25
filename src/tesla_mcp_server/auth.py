@@ -3,27 +3,50 @@ import json
 import httpx
 from datetime import datetime, timedelta
 from typing import Dict, Optional
-from dotenv import load_dotenv
+from pathlib import Path
+from python_dotenv import load_dotenv, find_dotenv
+from cryptography.fernet import InvalidToken
 from urllib.parse import urlencode
 
-# Load environment variables from .env file in project root
-env_path = os.path.join(os.path.dirname(__file__), '.env')
-print(f"Loading environment variables from: {env_path}")
-load_dotenv(env_path)
+from .encryption import decrypt_data
+
+# Define Project Root and .env path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DOTENV_PATH = find_dotenv(str(PROJECT_ROOT / ".env"), usecwd=True, raise_error_if_not_found=False) or PROJECT_ROOT / ".env"
+load_dotenv(dotenv_path=DOTENV_PATH)
+# print(f"Loading environment variables from: {DOTENV_PATH}") # Optional: for debugging .env loading
 
 class TeslaAuth:
     def __init__(self):
-        self.client_id = os.getenv("TESLA_CLIENT_ID")
-        self.client_secret = os.getenv("TESLA_CLIENT_SECRET")
+        # Load Encryption Key
+        encryption_key_str = os.getenv("ENCRYPTION_KEY")
+        if not encryption_key_str:
+            raise ValueError("ENCRYPTION_KEY not found. Please run scripts/encrypt_creds.py or set it in your .env file.")
+        encryption_key_bytes = encryption_key_str.encode('utf-8')
+
+        # Load and Decrypt Credentials
+        credentials_file = PROJECT_ROOT / "credentials.enc"
+        if not credentials_file.exists():
+            raise FileNotFoundError(f"Encrypted credentials file not found at {credentials_file}. Please run scripts/encrypt_creds.py.")
+
+        with open(credentials_file, "rb") as f:
+            encrypted_creds = f.read()
+
+        try:
+            decrypted_creds_bytes = decrypt_data(encrypted_creds, encryption_key_bytes)
+        except InvalidToken:
+            raise ValueError("Failed to decrypt credentials. Ensure ENCRYPTION_KEY is correct and credentials.enc is valid.")
+        
+        credentials = json.loads(decrypted_creds_bytes.decode('utf-8'))
+        
+        self.client_id = credentials.get("client_id")
+        self.client_secret = credentials.get("client_secret")
+        
         self.access_token = None
         self.access_token_expiry = None
         
         if not self.client_id or not self.client_secret:
-            raise ValueError("TESLA_CLIENT_ID and TESLA_CLIENT_SECRET must be set in .env file")
-        
-        # Debug logging for environment variables
-        print(f"Client ID loaded: {self.client_id}")
-        print(f"Client Secret loaded: {self.client_secret[:5]}...{self.client_secret[-4:]}")
+            raise ValueError("Client ID or Client Secret not found in decrypted credentials.")
 
     async def get_access_token(self):
         """Get an access token using client credentials"""

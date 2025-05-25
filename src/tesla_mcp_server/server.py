@@ -1,37 +1,49 @@
-from mcp_server import MCPServer, MCPRequest, MCPResponse
+from mcp_server import MCPServer, MCPRequest, MCPResponse # Assuming mcp_server is a provided library
 from typing import Dict, Any, List
 import os
-from dotenv import load_dotenv
+import asyncio # Added asyncio
+from pathlib import Path # Added Path
+from python_dotenv import load_dotenv, find_dotenv # Switched to python_dotenv
+
 from .auth import TeslaAuth
 from .mcp import TeslaMCP
 
-# Load environment variables
-load_dotenv()
+# Load .env from project root for server-specific configurations
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DOTENV_PATH = find_dotenv(str(PROJECT_ROOT / ".env"), usecwd=True) or PROJECT_ROOT / ".env"
+load_dotenv(dotenv_path=DOTENV_PATH) # TeslaAuth will also load .env, this is fine.
 
-# Initialize Tesla MCP client
-tesla_mcp = TeslaMCP()
+TESLA_API_BASE_URL = os.getenv("TESLA_API_BASE_URL", "https://fleet-api.prd.na.vn.cloud.tesla.com")
+if not TESLA_API_BASE_URL: # Ensure it's set
+    raise ValueError("TESLA_API_BASE_URL must be set in .env or have a default in code.")
+
 
 class TeslaMCPServer(MCPServer):
     def __init__(self):
         super().__init__()
-        self.tesla_auth = TeslaAuth()
+        # TeslaAuth handles its own .env loading for ENCRYPTION_KEY and credentials
+        self.auth_manager = TeslaAuth() 
+        self.tesla_mcp = TeslaMCP(auth_manager=self.auth_manager, api_base_url=TESLA_API_BASE_URL)
 
     async def handle_request(self, request: MCPRequest) -> MCPResponse:
         """Handle incoming MCP requests."""
         try:
             # Get system status
             if "status" in request.text.lower() or "how are" in request.text.lower():
-                summary = tesla_mcp.get_system_summary()
+                summary = await self.tesla_mcp.get_system_summary()
                 return MCPResponse(text=format_system_summary(summary))
                 
             # Solar system queries
             elif "solar" in request.text.lower():
                 if "history" in request.text.lower():
                     # Get solar history
-                    systems = tesla_mcp.get_solar_systems()
+                    systems = await self.tesla_mcp.get_solar_systems()
                     if not systems:
                         return MCPResponse(text="No solar systems found.")
-                    site_id = systems[0]['id']
+                    # Assuming the first solar system if multiple exist for simplicity
+                    site_id = systems[0].get('id', systems[0].get('energy_site_id')) # Adjusted to match mcp.py summary logic
+                    if not site_id:
+                         return MCPResponse(text="Could not determine site ID for the solar system.")
                     period = "day"  # default to daily history
                     if "week" in request.text.lower():
                         period = "week"
@@ -39,27 +51,34 @@ class TeslaMCPServer(MCPServer):
                         period = "month"
                     elif "year" in request.text.lower():
                         period = "year"
-                    history = tesla_mcp.get_solar_history(site_id, period)
+                    history = await self.tesla_mcp.get_solar_history(site_id, period)
                     return MCPResponse(text=format_solar_history(history, period))
                 else:
                     # Get current solar status
-                    systems = tesla_mcp.get_solar_systems()
+                    systems = await self.tesla_mcp.get_solar_systems()
                     if not systems:
                         return MCPResponse(text="No solar systems found.")
-                    site_id = systems[0]['id']
-                    status = tesla_mcp.get_solar_system(site_id)
+                    site_id = systems[0].get('id', systems[0].get('energy_site_id'))
+                    if not site_id:
+                         return MCPResponse(text="Could not determine site ID for the solar system.")
+                    status = await self.tesla_mcp.get_solar_system(site_id)
                     return MCPResponse(text=format_solar_status(status))
                 
             # Vehicle queries
             elif "vehicle" in request.text.lower() or "car" in request.text.lower():
-                vehicles = tesla_mcp.get_vehicles()
+                vehicles = await self.tesla_mcp.get_vehicles()
                 if not vehicles:
                     return MCPResponse(text="No vehicles found.")
                 
                 # If specific vehicle mentioned
                 for vehicle in vehicles:
-                    if vehicle['display_name'].lower() in request.text.lower():
-                        status = tesla_mcp.get_vehicle(vehicle['id'])
+                    vehicle_name = vehicle.get('display_name', vehicle.get('vehicle_name'))
+                    vehicle_id = vehicle.get('id', vehicle.get('id_s'))
+                    if not vehicle_name or not vehicle_id:
+                        continue # Skip if essential info missing
+
+                    if vehicle_name.lower() in request.text.lower():
+                        status = await self.tesla_mcp.get_vehicle(vehicle_id)
                         return MCPResponse(text=format_vehicle_status(status))
                 
                 # General vehicle status
@@ -67,10 +86,14 @@ class TeslaMCPServer(MCPServer):
                 
             # Default to system summary if no specific request
             else:
-                summary = tesla_mcp.get_system_summary()
+                summary = await self.tesla_mcp.get_system_summary()
                 return MCPResponse(text=format_system_summary(summary))
                 
         except Exception as e:
+            # Log the full error for debugging
+            print(f"Error handling request: {e}") 
+            import traceback
+            traceback.print_exc()
             return MCPResponse(text=f"Error: {str(e)}")
 
 def format_system_summary(summary: dict) -> str:
