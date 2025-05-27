@@ -15,13 +15,6 @@ from cryptography.fernet import InvalidToken
 from urllib.parse import urlencode, parse_qs, urlparse
 import sys
 
-from .encryption import decrypt_data, encrypt_data
-
-# Define Project Root and .env path
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-DOTENV_PATH = find_dotenv(str(PROJECT_ROOT / ".env"), usecwd=True, raise_error_if_not_found=False) or PROJECT_ROOT / ".env"
-load_dotenv(dotenv_path=DOTENV_PATH)
-
 class TeslaAuth:
     def __init__(self):
         # Configure client with TLS 1.2 and appropriate timeouts
