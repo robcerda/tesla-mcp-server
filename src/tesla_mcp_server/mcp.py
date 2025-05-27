@@ -52,9 +52,13 @@ class TeslaMCP:
 
     async def send_vehicle_command(self, vehicle_id: str, command: str, parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Send a command to a vehicle."""
-        # Owner API uses command name in the path
-        endpoint = f"/api/1/vehicles/{vehicle_id}/command/{command}"
-        return await self._make_request("POST", endpoint, json=parameters or {})
+        # Special case for wake_up command
+        if command == "wake_up":
+            endpoint = f"/api/1/vehicles/{vehicle_id}/wake_up"
+            return await self._make_request("POST", endpoint)
+        else:
+            endpoint = f"/api/1/vehicles/{vehicle_id}/command/{command}"
+            return await self._make_request("POST", endpoint, json=parameters or {})
 
     async def get_solar_systems(self) -> List[Dict[str, Any]]:
         """Get list of all solar systems (energy sites)."""
