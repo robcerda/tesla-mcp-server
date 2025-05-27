@@ -8,7 +8,6 @@ Model Context Protocol (MCP) server for connecting Claude with the Tesla Owner A
 * Model Context Protocol (MCP) Python SDK
 * httpx
 * python-dotenv
-* beautifulsoup4
 
 ## Setup
 
