@@ -20,6 +20,8 @@ dependencies = [
     "pydantic>=2.7.2",
     "python-jose[cryptography]>=3.3.0",
     "mcp[cli]>=0.1.0",
+    "selenium>=4.18.1",
+    "webdriver-manager>=4.0.1",
 ]
 
 [project.optional-dependencies]

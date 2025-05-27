@@ -34,6 +34,7 @@ venv.bak/
 # Secrets
 *.env
 credentials.enc
+refresh_token.txt
 
 # IDE / Editor specific
 .vscode/

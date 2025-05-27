@@ -1,104 +1,127 @@
 # Tesla MCP Server
 
-A Model-Controller-Provider server for Tesla vehicles and solar systems. This server allows Claude and other AI assistants to interact with Tesla vehicles and solar systems through a standardized interface.
-
-## ⚠️ Python Version Compatibility
-
-**This project does not support Python 3.13 yet. Please use Python 3.12.**
-
-- If you use [uv](https://github.com/astral-sh/uv), it will automatically create a virtual environment with the correct Python version (if available via pyenv or on your system).
-- If you do not have Python 3.12 installed, install it with [pyenv](https://github.com/pyenv/pyenv):
-  ```sh
-  pyenv install 3.12.3
-  ```
-
-## Features
-
-- Vehicle status and control
-- Solar system monitoring
-- Energy usage tracking
-- Standardized MCP interface for AI assistants
+Model Context Protocol (MCP) server for connecting Claude with the Tesla Owner API. It provides tools for authentication and data retrieval for Tesla vehicles and solar systems.
 
 ## Requirements
 
-- [uv](https://github.com/astral-sh/uv) (recommended for all dependency and environment management)
-- Python 3.12 (see above)
-- Tesla account with API access
-- Tesla API credentials (Client ID and Client Secret). This server authenticates with the Tesla API using the OAuth 2.0 client credentials grant type. For more details on this flow, refer to the official Tesla Fleet API documentation (e.g., at `https://developer.tesla.com/docs/fleet-api`).
+* Python 3.7 or higher
+* Model Context Protocol (MCP) Python SDK
+* httpx
+* python-dotenv
+* beautifulsoup4
 
-## Installation
+## Setup
 
-1. Clone the repository:
+### 1. Install uv (recommended)
+
 ```bash
-git clone https://github.com/robcerda/tesla-mcp-server.git
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+### 2. Clone this repository
+
+```bash
+git clone https://github.com/yourusername/tesla-mcp-server.git
 cd tesla-mcp-server
 ```
 
-2. Create and activate a virtual environment using uv (recommended):
-```bash
-uv venv --python 3.12
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
-
-3. Install the package in development mode using uv:
-```bash
-uv pip install -e .
-```
-
-If you do not have uv installed:
-- On macOS with Homebrew:
-  ```bash
-  brew install uv
-  ```
-- Or using the official installer:
-  ```bash
-  curl -LsSf https://astral.sh/uv/install.sh | sh
-  ```
-
-4. Create a `.env` file in the project root (if it doesn't exist already). This file will primarily store your local `ENCRYPTION_KEY` and can also be used for optional configuration overrides like `TESLA_API_BASE_URL`.
-Example of `.env` content:
-```env
-# The ENCRYPTION_KEY is used to encrypt your Tesla API credentials.
-# If this key is missing when you run 'python scripts/encrypt_creds.py',
-# the script will automatically generate a secure key and save it here.
-ENCRYPTION_KEY=your_key_here_will_be_auto_generated_if_missing
-
-# Optional: Override the default Tesla API base URL
-# TESLA_API_BASE_URL=https://fleet-api.prd.na.vn.cloud.tesla.com
-```
-Your `TESLA_CLIENT_ID` and `TESLA_CLIENT_SECRET` are not stored directly in the `.env` file. They are encrypted and stored in a `credentials.enc` file as described below.
-
-## Setting Up Tesla API Credentials (Encrypted)
-
-To set up your Tesla API credentials for the server, run the following script:
-```bash
-python scripts/encrypt_creds.py
-```
-This script will guide you through the following:
-1.  It will prompt you for your Tesla Client ID and Client Secret.
-2.  It will check for an `ENCRYPTION_KEY` in your `.env` file (located in the project root).
-3.  If an `ENCRYPTION_KEY` is not found, or the `.env` file doesn't exist (the script will create it if it's missing and you confirm), the script will automatically generate a new secure key and save it to the `.env` file for you. You'll be notified if this happens.
-4.  Finally, it will encrypt your Client ID and Secret using this key and save them into a `credentials.enc` file in the project root.
-
-The `credentials.enc` file (containing your encrypted Tesla API credentials) and your `.env` file (containing the `ENCRYPTION_KEY`) should not be committed to version control if your repository is public or shared. The provided `.gitignore` file is already configured to ignore these files.
-
-## Running the MCP Server
-
-After installation and setting up your credentials, you can run the MCP server using:
+### 3. Create and activate a virtual environment
 
 ```bash
-mcp install src/tesla_mcp_server/server.py --name "Tesla MCP" --with-editable . --env-file .env
+# Create virtual environment
+uv venv
+
+# Activate virtual environment
+# On macOS/Linux:
+source .venv/bin/activate
+# On Windows:
+.venv\Scripts\activate
 ```
 
-This command:
-- Installs the server as an MCP tool named "Tesla MCP"
-- Uses the editable install mode for development
-- Loads environment variables from your `.env` file
+### 4. Sync project dependencies
 
-The server provides the following tools:
-- `get_system_status`: Get the current status of all Tesla systems
-- `get_solar_status`: Get the current status of the solar system
-- `get_solar_history`: Get historical data for the solar system
-- `get_vehicle_status`: Get the status of all vehicles or a specific vehicle
+```bash
+uv sync
+```
 
-You can use these tools through Claude or any other MCP-compatible AI assistant.
+## Usage
+
+### Authentication Flow
+
+This server uses Tesla's **Owner API** and implements a secure OAuth2 authentication flow. On first run, you will be prompted to authenticate via your browser. After successful authentication, a `refresh_token.txt` file will be created and used for future sessions. **Do not commit `refresh_token.txt` to version control.**
+
+### 1. Configure Claude Desktop
+
+To use this server with Claude Desktop, you need to add it to your Claude Desktop configuration.
+
+1. Run the following from the `tesla_mcp_server` directory to configure Claude Desktop:
+
+```bash
+mcp install src/tesla_mcp_server/server.py --name "Tesla" --with-editable .
+```
+
+2. If you open your Claude Desktop App configuration file `claude_desktop_config.json`, it should look like this:
+
+```json
+{
+  "mcpServers": {
+    "Tesla": {
+      "command": "/Users/<USERNAME>/.cargo/bin/uv",
+      "args": [
+        "run",
+        "--with",
+        "mcp[cli]",
+        "--with-editable",
+        "/path/to/tesla-mcp-server",
+        "mcp",
+        "run",
+        "/path/to/tesla-mcp-server/src/tesla_mcp_server/server.py"
+      ],
+      "env": {
+        "LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}
+```
+
+Where `/path/to/` is the path to the `tesla-mcp-server` code folder in your system.
+
+3. Restart Claude Desktop.
+
+### 2. Use the MCP server with Claude
+
+Once the server is running and Claude Desktop is configured, you can use the following tools to interact with your Tesla systems:
+
+* `get_vehicles`: Get a list of all your vehicles
+* `get_vehicle`: Get detailed information about a specific vehicle
+* `send_command`: Send a command to a vehicle
+* `get_solar_system`: Get status of a solar system
+* `get_solar_history`: Get history of a solar system
+* `get_system_summary`: Get a summary of all Tesla systems
+
+#### Note on Authentication
+- On first run, you will be prompted to authenticate via your browser. Follow the instructions in the terminal.
+- After authenticating, a `refresh_token.txt` file will be created and used for future sessions.
+- If you ever need to re-authenticate, simply delete `refresh_token.txt` and restart the server.
+
+## Development and testing
+
+Install development dependencies and run the test suite with:
+
+```bash
+uv sync --all-extras
+pytest -v tests
+```
+
+### Running the server locally
+
+To start the server manually (useful when developing or testing), run:
+
+```bash
+mcp run src/tesla_mcp_server/server.py
+```
+
+## License
+
+The GNU General Public License v3.0
