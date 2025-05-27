@@ -4,7 +4,7 @@ Model Context Protocol (MCP) server for connecting Claude with the Tesla Owner A
 
 ## Requirements
 
-* Python 3.7 or higher
+* Python 3.12 or higher
 * Model Context Protocol (MCP) Python SDK
 * httpx
 * python-dotenv
