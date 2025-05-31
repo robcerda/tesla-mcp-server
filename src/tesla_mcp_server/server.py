@@ -38,6 +38,7 @@ from typing import Dict, Any, List, Optional
 from dotenv import load_dotenv
 from tesla_mcp_server.auth import TeslaAuth
 from tesla_mcp_server.mcp import TeslaMCP
+from tesla_mcp_server.config import PROJECT_ROOT
 from mcp.server.fastmcp import FastMCP
 
 # Configure logging to stderr

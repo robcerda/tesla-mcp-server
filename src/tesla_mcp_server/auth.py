@@ -14,6 +14,7 @@ from dotenv import load_dotenv, find_dotenv
 from cryptography.fernet import InvalidToken
 from urllib.parse import urlencode, parse_qs, urlparse
 import sys
+from .config import PROJECT_ROOT
 
 class TeslaAuth:
     def __init__(self):
