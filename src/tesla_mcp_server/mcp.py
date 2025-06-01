@@ -63,8 +63,9 @@ class TeslaMCP:
     async def get_solar_systems(self) -> List[Dict[str, Any]]:
         """Get list of all solar systems (energy sites)."""
         data = await self._make_request("GET", "/api/1/products")
-        # Filter for energy products
-        return [product for product in data.get("response", []) if product.get("resource_type") == "battery"]
+        # Filter for all energy products (solar, battery, etc.)
+        return [product for product in data.get("response", []) 
+                if product.get("resource_type") in ["battery", "solar", "solar_and_battery"]]
 
     async def get_solar_system(self, site_id: str) -> Dict[str, Any]:
         """Get specific solar system status."""
