@@ -45,11 +45,34 @@ uv sync
 
 ## Usage
 
-### Authentication Flow
+### Authentication Setup
 
-This server uses Tesla's **Owner API** and implements a secure OAuth2 authentication flow. On first run, you will be prompted to authenticate via your browser. After successful authentication, a `refresh_token.txt` file will be created and used for future sessions. **Do not commit `refresh_token.txt` to version control.**
+This server uses Tesla's **Owner API** and implements a secure OAuth2 authentication flow. **Before using the server with Claude Desktop, you must first run the authentication setup script.**
 
-### 1. Configure Claude Desktop
+#### 1. Run Authentication Setup
+
+**IMPORTANT:** You must run this setup script before using the server with Claude:
+
+```bash
+python setup_auth.py
+```
+
+This script will:
+- Prompt you to authenticate via your browser
+- Walk you through the Tesla OAuth2 flow
+- Create a `refresh_token.txt` file for future sessions
+- Test the API connection to ensure everything works
+
+**Do not commit `refresh_token.txt` to version control.**
+
+#### 2. Authentication Flow Details
+
+- On first run of `setup_auth.py`, you will be prompted to authenticate via your browser
+- Follow the instructions in the terminal to complete the OAuth2 flow
+- After successful authentication, a `refresh_token.txt` file will be created and used for future sessions
+- The refresh token will be automatically used by the MCP server for subsequent API calls
+
+### Configure Claude Desktop
 
 To use this server with Claude Desktop, you need to add it to your Claude Desktop configuration.
 
@@ -88,10 +111,11 @@ Where `/path/to/` is the path to the `tesla-mcp-server` code folder in your syst
 
 3. Restart Claude Desktop.
 
-### 2. Use the MCP server with Claude
+### Use the MCP server with Claude
 
 Once the server is running and Claude Desktop is configured, you can use the following tools to interact with your Tesla systems:
 
+* `tesla_auth_status`: Check Tesla authentication status
 * `get_vehicles`: Get a list of all your vehicles
 * `get_vehicle`: Get detailed information about a specific vehicle
 * `send_command`: Send a command to a vehicle
@@ -99,10 +123,8 @@ Once the server is running and Claude Desktop is configured, you can use the fol
 * `get_solar_history`: Get history of a solar system
 * `get_system_summary`: Get a summary of all Tesla systems
 
-#### Note on Authentication
-- On first run, you will be prompted to authenticate via your browser. Follow the instructions in the terminal.
-- After authenticating, a `refresh_token.txt` file will be created and used for future sessions.
-- If you ever need to re-authenticate, simply delete `refresh_token.txt` and restart the server.
+#### Re-authentication
+- If you ever need to re-authenticate, simply delete `refresh_token.txt` and run `python setup_auth.py` again.
 
 ## Development and testing
 

@@ -1,8 +1,17 @@
 README.md
+pyproject.toml
 setup.py
+src/tesla_mcp_server/__init__.py
+src/tesla_mcp_server/__main__.py
+src/tesla_mcp_server/auth.py
+src/tesla_mcp_server/cli.py
+src/tesla_mcp_server/config.py
+src/tesla_mcp_server/mcp.py
+src/tesla_mcp_server/server.py
 src/tesla_mcp_server.egg-info/PKG-INFO
 src/tesla_mcp_server.egg-info/SOURCES.txt
 src/tesla_mcp_server.egg-info/dependency_links.txt
 src/tesla_mcp_server.egg-info/entry_points.txt
 src/tesla_mcp_server.egg-info/requires.txt
 src/tesla_mcp_server.egg-info/top_level.txt
+tests/test_server.py

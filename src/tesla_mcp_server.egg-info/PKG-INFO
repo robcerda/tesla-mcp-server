@@ -1,148 +1,180 @@
 Metadata-Version: 2.4
 Name: tesla-mcp-server
 Version: 0.1.0
-Summary: A Model-Controller-Provider server for Tesla vehicles and solar systems
-Home-page: https://github.com/yourusername/tesla-mcp-server
-Author: Your Name
-Author-email: your.email@example.com
+Summary: Model Context Protocol (MCP) server for Tesla vehicles and solar systems
+Author-email: Rob Cerda <me@robcerda.com>
+License: MIT
+Project-URL: Homepage, https://github.com/robcerda/tesla-mcp-server
+Project-URL: Repository, https://github.com/robcerda/tesla-mcp-server
+Project-URL: Issues, https://github.com/robcerda/tesla-mcp-server/issues
 Classifier: Development Status :: 3 - Alpha
 Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 3
-Classifier: Programming Language :: Python :: 3.8
-Classifier: Programming Language :: Python :: 3.9
-Classifier: Programming Language :: Python :: 3.10
-Requires-Python: >=3.8
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.7
 Description-Content-Type: text/markdown
-Requires-Dist: fastapi==0.104.1
-Requires-Dist: uvicorn==0.24.0
-Requires-Dist: python-dotenv==1.0.0
-Requires-Dist: httpx==0.25.1
-Requires-Dist: pydantic==2.4.2
-Requires-Dist: python-jose[cryptography]==3.3.0
-Requires-Dist: mcp-server
-Dynamic: author
-Dynamic: author-email
-Dynamic: classifier
-Dynamic: description
-Dynamic: description-content-type
-Dynamic: home-page
-Dynamic: requires-dist
+Requires-Dist: mcp[cli]>=1.0.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: httpx>=0.25.1
+Requires-Dist: pydantic>=2.7.2
+Requires-Dist: python-jose[cryptography]>=3.3.0
+Requires-Dist: selenium>=4.18.1
+Requires-Dist: webdriver-manager>=4.0.1
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: isort>=5.12.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Requires-Dist: pre-commit>=3.0.0; extra == "dev"
 Dynamic: requires-python
-Dynamic: summary
 
 # Tesla MCP Server
 
-A Model-Controller-Provider server for Tesla vehicles and solar systems. This server allows Claude and other AI assistants to interact with Tesla vehicles and solar systems through a standardized interface.
-
-## Features
-
-- Vehicle status and control
-- Solar system monitoring
-- Energy usage tracking
-- Standardized MCP interface for AI assistants
+Model Context Protocol (MCP) server for connecting Claude with the Tesla Owner API. It provides tools for authentication and data retrieval for Tesla vehicles and solar systems.
 
 ## Requirements
 
-- Python 3.8 or higher
-- Tesla account with API access
-- Tesla API credentials (Client ID and Client Secret)
+* Python 3.12 or higher
+* Model Context Protocol (MCP) Python SDK
+* httpx
+* python-dotenv
 
-## Installation
+## Setup
 
-1. Clone the repository:
+### 1. Install uv (recommended)
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+### 2. Clone this repository
+
 ```bash
 git clone https://github.com/yourusername/tesla-mcp-server.git
 cd tesla-mcp-server
 ```
 
-2. Create and activate a virtual environment:
+### 3. Create and activate a virtual environment
+
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# Create virtual environment
+uv venv
+
+# Activate virtual environment
+# On macOS/Linux:
+source .venv/bin/activate
+# On Windows:
+.venv\Scripts\activate
 ```
 
-3. Install the package:
-```bash
-pip install -e .
-```
+### 4. Sync project dependencies
 
-4. Create a `.env` file in the project root with your Tesla API credentials:
-```env
-TESLA_CLIENT_ID=your_client_id
-TESLA_CLIENT_SECRET=your_client_secret
+```bash
+uv sync
 ```
 
 ## Usage
 
-### Starting the Server
+### Authentication Setup
 
-Run the server using the command-line interface:
+This server uses Tesla's **Owner API** and implements a secure OAuth2 authentication flow. **Before using the server with Claude Desktop, you must first run the authentication setup script.**
+
+#### 1. Run Authentication Setup
+
+**IMPORTANT:** You must run this setup script before using the server with Claude:
+
 ```bash
-tesla-mcp-server
+python setup_auth.py
 ```
 
-Or run it directly with Python:
+This script will:
+- Prompt you to authenticate via your browser
+- Walk you through the Tesla OAuth2 flow
+- Create a `refresh_token.txt` file for future sessions
+- Test the API connection to ensure everything works
+
+**Do not commit `refresh_token.txt` to version control.**
+
+#### 2. Authentication Flow Details
+
+- On first run of `setup_auth.py`, you will be prompted to authenticate via your browser
+- Follow the instructions in the terminal to complete the OAuth2 flow
+- After successful authentication, a `refresh_token.txt` file will be created and used for future sessions
+- The refresh token will be automatically used by the MCP server for subsequent API calls
+
+### Configure Claude Desktop
+
+To use this server with Claude Desktop, you need to add it to your Claude Desktop configuration.
+
+1. Run the following from the `tesla_mcp_server` directory to configure Claude Desktop:
+
 ```bash
-python -m tesla_mcp_server.server
+mcp install src/tesla_mcp_server/server.py --name "Tesla" --with-editable .
 ```
 
-The server will start on `http://localhost:8000` by default.
+2. If you open your Claude Desktop App configuration file `claude_desktop_config.json`, it should look like this:
 
-### Interacting with the Server
-
-The server provides several endpoints for interacting with Tesla vehicles and solar systems:
-
-- `/health` - Check server health
-- `/vehicles` - List all vehicles
-- `/vehicles/{id}` - Get specific vehicle details
-- `/solar_systems` - List all solar systems
-- `/solar_systems/{id}` - Get specific solar system details
-- `/solar_systems/{id}/history` - Get solar system history
-
-### Example Queries
-
-The server supports natural language queries through the MCP interface. Here are some examples:
-
-- "What's the status of my Tesla?"
-- "How much solar power am I generating?"
-- "What's my battery level?"
-- "Show me my solar history for the past week"
-
-## Configuration
-
-The server can be configured through environment variables:
-
-- `TESLA_CLIENT_ID` - Your Tesla API client ID
-- `TESLA_CLIENT_SECRET` - Your Tesla API client secret
-- `PORT` - Server port (default: 8000)
-- `HOST` - Server host (default: localhost)
-
-## Development
-
-1. Install development dependencies:
-```bash
-pip install -e ".[dev]"
+```json
+{
+  "mcpServers": {
+    "Tesla": {
+      "command": "/Users/<USERNAME>/.cargo/bin/uv",
+      "args": [
+        "run",
+        "--with",
+        "mcp[cli]",
+        "--with-editable",
+        "/path/to/tesla-mcp-server",
+        "mcp",
+        "run",
+        "/path/to/tesla-mcp-server/src/tesla_mcp_server/server.py"
+      ],
+      "env": {
+        "LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}
 ```
 
-2. Run tests:
+Where `/path/to/` is the path to the `tesla-mcp-server` code folder in your system.
+
+3. Restart Claude Desktop.
+
+### Use the MCP server with Claude
+
+Once the server is running and Claude Desktop is configured, you can use the following tools to interact with your Tesla systems:
+
+* `tesla_auth_status`: Check Tesla authentication status
+* `get_vehicles`: Get a list of all your vehicles
+* `get_vehicle`: Get detailed information about a specific vehicle
+* `send_command`: Send a command to a vehicle
+* `get_solar_system`: Get status of a solar system
+* `get_solar_history`: Get history of a solar system
+* `get_system_summary`: Get a summary of all Tesla systems
+
+#### Re-authentication
+- If you ever need to re-authenticate, simply delete `refresh_token.txt` and run `python setup_auth.py` again.
+
+## Development and testing
+
+Install development dependencies and run the test suite with:
+
 ```bash
-pytest
+uv sync --all-extras
+pytest -v tests
 ```
 
-## Contributing
+### Running the server locally
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+To start the server manually (useful when developing or testing), run:
+
+```bash
+mcp run src/tesla_mcp_server/server.py
+```
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Inspired by the [intervals-mcp-server](https://github.com/mvilanova/intervals-mcp-server)
-- Built with FastAPI and the MCP server framework 
+The GNU General Public License v3.0

@@ -1,53 +1,73 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "tesla-mcp-server"
 version = "0.1.0"
-description = "A Model-Controller-Provider server for Tesla vehicles and solar systems"
+description = "Model Context Protocol (MCP) server for Tesla vehicles and solar systems"
 readme = "README.md"
-requires-python = ">=3.12"
-license = "MIT"
+license = { text = "MIT" }
 authors = [
     { name = "Rob Cerda", email = "me@robcerda.com" }
 ]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.104.1",
-    "uvicorn>=0.24.0",
+    "mcp[cli]>=1.0.0",
     "python-dotenv>=1.0.0",
     "httpx>=0.25.1",
     "pydantic>=2.7.2",
     "python-jose[cryptography]>=3.3.0",
-    "mcp[cli]>=0.1.0",
     "selenium>=4.18.1",
     "webdriver-manager>=4.0.1",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "black",
-    "isort",
-    "mypy",
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
 ]
 
-[project.scripts]
-mcp = "tesla_mcp_server.server:main"
+[project.urls]
+Homepage = "https://github.com/robcerda/tesla-mcp-server"
+Repository = "https://github.com/robcerda/tesla-mcp-server"
+Issues = "https://github.com/robcerda/tesla-mcp-server/issues"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/tesla_mcp_server"]
+[project.scripts]
+tesla-mcp-server = "tesla_mcp_server.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.black]
 line-length = 88
-target-version = ["py312"]
+target-version = ['py312']
 
 [tool.isort]
 profile = "black"
-multi_line_output = 3
+line_length = 88
 
 [tool.mypy]
 python_version = "3.12"
+strict = true
 warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = true 
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"] 

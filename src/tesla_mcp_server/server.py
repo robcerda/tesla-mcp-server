@@ -34,90 +34,165 @@ import sys
 import logging
 import asyncio
 import json
-from typing import Dict, Any, List, Optional
+from typing import Optional
+from concurrent.futures import ThreadPoolExecutor
+
 from dotenv import load_dotenv
+from mcp.server.fastmcp import FastMCP
+import mcp.types as types
+
 from tesla_mcp_server.auth import TeslaAuth
 from tesla_mcp_server.mcp import TeslaMCP
-from tesla_mcp_server.config import PROJECT_ROOT
-from mcp.server.fastmcp import FastMCP
 
-# Configure logging to stderr
-logging.basicConfig(
-    level=logging.DEBUG,  # Set to DEBUG for more verbose output
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stderr)],
-)
-logger = logging.getLogger("tesla_mcp_server")
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
 
-# Initialize Tesla auth and MCP client
-tesla_auth = TeslaAuth()
-tesla_mcp = TeslaMCP(auth_manager=tesla_auth)
+def run_async(coro):
+    """Run async function in a new thread with its own event loop."""
+    def _run():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(coro)
+        except Exception as e:
+            logger.error(f"Error in async execution: {e}")
+            raise
+        finally:
+            try:
+                # Cancel any remaining tasks
+                pending = asyncio.all_tasks(loop)
+                for task in pending:
+                    task.cancel()
+                if pending:
+                    loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                loop.close()
+            except Exception as e:
+                logger.error(f"Error closing event loop: {e}")
+    
+    with ThreadPoolExecutor() as executor:
+        future = executor.submit(_run)
+        return future.result(timeout=30)
 
-# Initialize FastMCP server
-mcp = FastMCP("tesla-mcp")
+# Initialize Tesla auth manager (preserving existing auth mechanism)
+tesla_auth = TeslaAuth()
+
+# Initialize service client (will be created when first needed)
+tesla_client: Optional[TeslaMCP] = None
+
+# Create FastMCP server
+mcp = FastMCP("tesla-mcp-server")
+
+def get_tesla_client() -> TeslaMCP:
+    """Get or create Tesla MCP client."""
+    global tesla_client
+    if not tesla_client:
+        tesla_client = TeslaMCP(auth_manager=tesla_auth)
+    return tesla_client
 
 @mcp.tool()
-async def get_vehicles() -> Dict:
-    """Get list of all vehicles."""
+def get_vehicles() -> str:
+    """Get list of all vehicles"""
     try:
-        vehicles = await tesla_mcp.get_vehicles()
-        return vehicles
+        async def _get_vehicles():
+            client = get_tesla_client()
+            return await client.get_vehicles()
+        
+        vehicles = run_async(_get_vehicles())
+        return str(vehicles)
     except Exception as e:
         logger.error(f"Error getting vehicles: {str(e)}")
-        raise
+        return f"Error: {str(e)}"
 
 @mcp.tool()
-async def get_vehicle(vehicle_id: str) -> Dict:
-    """Get detailed information about a specific vehicle."""
+def get_vehicle(vehicle_id: str) -> str:
+    """Get detailed information about a specific vehicle"""
     try:
-        vehicle_data = await tesla_mcp.get_vehicle(vehicle_id)
-        return vehicle_data
+        async def _get_vehicle():
+            client = get_tesla_client()
+            return await client.get_vehicle(vehicle_id)
+        
+        vehicle_data = run_async(_get_vehicle())
+        return str(vehicle_data)
     except Exception as e:
         logger.error(f"Error getting vehicle {vehicle_id}: {str(e)}")
-        raise
+        return f"Error: {str(e)}"
 
 @mcp.tool()
-async def send_command(vehicle_id: str, command: str, parameters: Optional[Dict] = None) -> Dict:
-    """Send a command to a vehicle."""
+def send_command(vehicle_id: str, command: str, parameters: str = "") -> str:
+    """Send a command to a vehicle"""
     try:
-        result = await tesla_mcp.send_vehicle_command(vehicle_id, command, parameters or {})
-        return result
+        async def _send_command():
+            client = get_tesla_client()
+            params = json.loads(parameters) if parameters else {}
+            return await client.send_vehicle_command(vehicle_id, command, params)
+        
+        result = run_async(_send_command())
+        return str(result)
     except Exception as e:
         logger.error(f"Error sending command to vehicle {vehicle_id}: {str(e)}")
-        raise
+        return f"Error: {str(e)}"
 
 @mcp.tool()
-async def get_solar_system(site_id: str) -> Dict:
-    """Get status of a solar system."""
+def get_solar_system(site_id: str) -> str:
+    """Get status of a solar system"""
     try:
-        solar_data = await tesla_mcp.get_solar_system(site_id)
-        return solar_data
+        async def _get_solar_system():
+            client = get_tesla_client()
+            return await client.get_solar_system(site_id)
+        
+        solar_data = run_async(_get_solar_system())
+        return str(solar_data)
     except Exception as e:
         logger.error(f"Error getting solar system {site_id}: {str(e)}")
-        raise
+        return f"Error: {str(e)}"
 
 @mcp.tool()
-async def get_solar_history(site_id: str, period: str = "day") -> Dict:
-    """Get history of a solar system."""
+def get_solar_history(site_id: str, period: str = "day") -> str:
+    """Get history of a solar system"""
     try:
-        history_data = await tesla_mcp.get_solar_history(site_id, period)
-        return history_data
+        async def _get_solar_history():
+            client = get_tesla_client()
+            return await client.get_solar_history(site_id, period)
+        
+        history_data = run_async(_get_solar_history())
+        return str(history_data)
     except Exception as e:
         logger.error(f"Error getting solar history for {site_id}: {str(e)}")
-        raise
+        return f"Error: {str(e)}"
 
 @mcp.tool()
-async def get_system_summary() -> Dict:
-    """Get a summary of all Tesla systems."""
+def get_system_summary() -> str:
+    """Get a summary of all Tesla systems"""
     try:
-        summary = await tesla_mcp.get_system_summary()
-        return summary
+        async def _get_system_summary():
+            client = get_tesla_client()
+            return await client.get_system_summary()
+        
+        summary = run_async(_get_system_summary())
+        return str(summary)
     except Exception as e:
         logger.error(f"Error getting system summary: {str(e)}")
-        raise
+        return f"Error: {str(e)}"
+
+# Authentication status tool
+@mcp.tool()
+def tesla_auth_status() -> str:
+    """Check Tesla authentication status"""
+    try:
+        async def _check_auth():
+            try:
+                await tesla_auth.get_valid_token()
+                return "✅ Authenticated with Tesla API"
+            except Exception as e:
+                return f"❌ Not authenticated: {str(e)}"
+        
+        return run_async(_check_auth())
+    except Exception as e:
+        return f"Error checking authentication: {str(e)}"
 
 def main():
     """Main entry point for the MCP server."""
@@ -137,6 +212,9 @@ def main():
     except Exception as e:
         print(f"Failed to run server: {str(e)}", file=sys.stderr)
         raise
+
+# Export for mcp run
+app = mcp
 
 if __name__ == "__main__":
     main()
